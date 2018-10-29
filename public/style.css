@@ -1,0 +1,14 @@
+.form-control {
+    background: #FBFEF9;
+    border-color: #BF1363;
+    color: #333333;
+}
+
+.btn {
+    background: #BF1363;
+    color: #FFFFFF;
+}
+#add-row{
+    background: #BF1363;
+    color: #FFFFFF;
+}
