@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
-const ScoreModel = require('./models/scoreModel')
+const TableModel = require('./models/tableModel')
 
 mongoose.connect("mongodb://localhost/scorekeeper", (err) => {
     if (err) console.log(err);
@@ -17,58 +17,71 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-app.post('/createScoreName', (req, res) => {
-    ScoreModel.create(
+app.post('/createTable', (req, res) => {
+    TableModel.create(
         {
             playerName1: req.body.playerName1,
             playerName2: req.body.playerName2,
             playerName3: req.body.playerName3,
-            playerName4: req.body.playerName4
+            playerName4: req.body.playerName4,
+            round: [[0, 0, 0, 0]]
         },
-        (err, scoreCreated) => {
+        (err, tableCreated) => {
             if (err) console.log(err);
-            else res.redirect('/games/' + scoreCreated._id);
+            else res.redirect('/games/' + tableCreated._id);
         });
 });
 
-// app.get('/games/:scoreId', (req, res) => {
-//     ScoreName = req.body.ScoreName;
-//     console.log(ScoreName);
-//     res.send('<h1>' + ScoreName + '<h1>');
-// });
+app.get('/tabledetail/:tableId', (req, res) => {
+    let tableId = req.params.tableId;
 
-app.get('/scoredetail/:scoreId', (req, res) => {
-	let scoreId = req.params.scoreId;
-
-	ScoreModel.findById(scoreId)
-	ScoreModel.findOne({ "_id": scoreId }, (err, scoreFound) => {
-		if(err) console.log(err)
-		else if(!scoreFound) console.log("Not Found")
-		else {
-            res.send({ success: 1 , scoreFound: scoreFound });
-		}
-	});
+    TableModel.findById(tableId, (err, tableFound) => {
+        if (err) console.log(err)
+        else if (!tableFound) console.log("Not Found")
+        else {
+            res.send({ success: 1, tableFound: tableFound });
+        }
+    });
 });
 
-app.get('/games/:scoreId', (req, res) => {
+app.get('/games/:tableId', (req, res) => {
     res.sendFile(__dirname + '/public/score.html');
 });
 
-// app.post('/updateScore', (req, res) => {
-// 	const { Scoreid, score } = req.body;
-// 	ScoreModel.findById(Scoreid, (err, ScoreFound) => {
-// 		if(err) console.log(err)
-// 		else if(!ScoreFound) console.log("Not found!")
-// 		else {
-// 			//edit here
-// 			ScoreFound[score] += 10;
-// 			ScoreFound.save((err, ScoreUpdated) => {
-// 				if(err) console.log(err)
-// 				else res.send({ success: 1 });
-// 			});
-// 		}
-// 	});
-// });
+app.post('/addRound/:tableId', (req, res) => {
+    let tableId = req.params.tableId;
+
+    TableModel.findById(tableId , (err, tableFound) => {
+        if (err) console.log(err)
+        else if (!tableFound) console.log("Not Found")
+        else {
+            tableFound.round.push([0, 0, 0, 0]);
+            tableFound.markModified("round");
+            tableFound.save((err) => {
+                if (err) console.log(err)
+                else res.send({ success: 1 });
+            });
+        }
+    });
+});
+
+app.post('/updateScore/:tableId', (req, res) => {
+    let tableId = req.params.tableId;
+    const { row, col, val } = req.body;
+
+    TableModel.findById(tableId, (err, tableFound) => {
+        if (err) console.log(err)
+        else if (!tableFound) console.log("Not Found")
+        else {
+            tableFound.round[row][col-1] = val;
+            tableFound.markModified("round");
+            tableFound.save((err) => {
+                if (err) console.log(err)
+                else res.send({ success: 1});
+            });
+        }
+    });
+});
 
 
 app.use(express.static('public'));
